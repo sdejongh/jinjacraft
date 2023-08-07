@@ -1,0 +1,6 @@
+title: Hello World
+tasks:
+  - name: First task
+    completed: True
+  - name: Second task
+    completed: False

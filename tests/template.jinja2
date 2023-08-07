@@ -1,0 +1,4 @@
+Document: {{ title }}
+Tasks:
+{% for task in tasks %}- {{ task.name }} ({% if task.completed %}completed{% else %}not completed{% endif %})
+{%  endfor %}
