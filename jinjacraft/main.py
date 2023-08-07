@@ -4,7 +4,6 @@ from jinjacraft.renderer import TemplateRenderer
 
 def main():
     """Main routine"""
-
     # Configure the argument parser
     parser = argparse.ArgumentParser()
     parser.add_argument("data_file", help="Yaml data file path")

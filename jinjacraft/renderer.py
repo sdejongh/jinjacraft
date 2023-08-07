@@ -7,7 +7,7 @@ class TemplateRenderer:
     """Jinja2 template renderer using Yaml data file"""
 
     @classmethod
-    def load_data(cls, data_file: str) -> Any:
+    def __load_data(cls, data_file: str) -> Any:
         """Loads data from YAML file
 
         Args:
@@ -24,7 +24,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def load_template(cls, template_file: str) -> str:
+    def __load_template(cls, template_file: str) -> str:
         """Loads Jinja2 template file
 
         Args:
@@ -41,7 +41,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def write_output(cls, content: str, output_file: str) -> None:
+    def __write_output(cls, content: str, output_file: str) -> None:
         """Writes rendered template to file
 
         Args:
@@ -55,7 +55,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def display(cls, content: str) -> None:
+    def __display(cls, content: str) -> None:
         """Display rendered template to the terminal
 
         Args:
@@ -73,15 +73,15 @@ class TemplateRenderer:
             template_file (str):        Jinja2 template file path
             output_file (str or None):  Output file path
         """
-        data = cls.load_data(data_file)
-        template = cls.load_template(template_file)
+        data = cls.__load_data(data_file)
+        template = cls.__load_template(template_file)
         environment = jinja2.Environment()
         try:
             jinja2_template = environment.from_string(template)
             result = jinja2_template.render(data)
             if output_file is None:
-                cls.display(result)
+                cls.__display(result)
             else:
-                cls.write_output(content=result, output_file=output_file)
+                cls.__write_output(content=result, output_file=output_file)
         except jinja2.exceptions.TemplateError as err:
             exit(err)
