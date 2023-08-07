@@ -13,5 +13,14 @@ pip install .
 
 ## Usage
 ```
-jinjacraft <data_file> <template_file> <outputfile>
+usage: jinjacraft [-h] [-o OUTPUT_FILE] data_file template_file
+
+positional arguments:
+  data_file             Yaml data file path
+  template_file         Jinja2 template file path
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT_FILE, --output_file OUTPUT_FILE
+                        Output file path
 ```

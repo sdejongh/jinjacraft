@@ -18,6 +18,8 @@ class TemplateRenderer:
         try:
             with open(data_file) as file:
                 return yaml.load(file, Loader=yaml.Loader)
+        except PermissionError as err:
+            exit(err)
         except FileNotFoundError as err:
             exit(err)
 

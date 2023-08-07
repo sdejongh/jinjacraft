@@ -9,7 +9,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_file", help="Yaml data file path")
     parser.add_argument("template_file", help="Jinja2 template file path")
-    parser.add_argument("output_file", default="", help="Output file path")
+    parser.add_argument("-o", "--output_file", help="Output file path", required=False)
 
     # Parse command line args
     args = parser.parse_args()
