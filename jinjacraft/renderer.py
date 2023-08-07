@@ -1,3 +1,4 @@
+from typing import Any
 import yaml
 import jinja2
 
@@ -6,7 +7,7 @@ class TemplateRenderer:
     """Jinja2 template renderer using Yaml data file"""
 
     @classmethod
-    def load_data(cls, data_file):
+    def load_data(cls, data_file: str) -> Any:
         """Loads data from YAML file
 
         Args:
@@ -21,7 +22,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def load_template(cls, template_file):
+    def load_template(cls, template_file: str) -> str:
         """Loads Jinja2 template file
 
         Args:
@@ -38,7 +39,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def write_output(cls, content, output_file):
+    def write_output(cls, content: str, output_file: str) -> None:
         """Writes rendered template to file
 
         Args:
@@ -52,7 +53,7 @@ class TemplateRenderer:
             exit(err)
 
     @classmethod
-    def display(cls, content):
+    def display(cls, content: str) -> None:
         """Display rendered template to the terminal
 
         Args:
@@ -61,7 +62,7 @@ class TemplateRenderer:
         print(content)
 
     @classmethod
-    def render(cls, data_file, template_file, output_file=None):
+    def render(cls, data_file: str, template_file: str, output_file: str or None = None):
         """Render the Jinja2 template using the YAML data file
         If output_file is None, prints the result to the terminal, otherwise write to the output file.
 
