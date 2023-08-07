@@ -1,0 +1,84 @@
+import yaml
+import jinja2
+
+
+class TemplateRenderer:
+    """Jinja2 template renderer using Yaml data file"""
+
+    @classmethod
+    def load_data(cls, data_file):
+        """Loads data from YAML file
+
+        Args:
+            data_file (str):    Yaml data file path
+
+        Returns: Parsed yaml data
+        """
+        try:
+            with open(data_file) as file:
+                return yaml.load(file, Loader=yaml.Loader)
+        except FileNotFoundError as err:
+            exit(err)
+
+    @classmethod
+    def load_template(cls, template_file):
+        """Loads Jinja2 template file
+
+        Args:
+            template_file (str): Jinja2 template file path
+
+        Returns: Jinja2 template
+        """
+        try:
+            with open(template_file) as file:
+                return file.read()
+        except FileNotFoundError as err:
+            exit(err)
+        except PermissionError as err:
+            exit(err)
+
+    @classmethod
+    def write_output(cls, content, output_file):
+        """Writes rendered template to file
+
+        Args:
+            content (str):  rendered templated
+            output_file (str): output file path
+        """
+        try:
+            with open(output_file, "w") as file:
+                file.write(content)
+        except PermissionError as err:
+            exit(err)
+
+    @classmethod
+    def display(cls, content):
+        """Display rendered template to the terminal
+
+        Args:
+            content (str):  rendered templated
+        """
+        print(content)
+
+    @classmethod
+    def render(cls, data_file, template_file, output_file=None):
+        """Render the Jinja2 template using the YAML data file
+        If output_file is None, prints the result to the terminal, otherwise write to the output file.
+
+        Args:
+            data_file (str):            Yaml data file path
+            template_file (str):        Jinja2 template file path
+            output_file (str or None):  Output file path
+        """
+        data = cls.load_data(data_file)
+        template = cls.load_template(template_file)
+        environment = jinja2.Environment()
+        try:
+            jinja2_template = environment.from_string(template)
+            result = jinja2_template.render(data)
+            if output_file is None:
+                cls.display(result)
+            else:
+                cls.write_output(content=result, output_file=output_file)
+        except jinja2.exceptions.TemplateError as err:
+            exit(err)
