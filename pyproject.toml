@@ -1,12 +1,27 @@
 [tool.poetry]
 name = "jinjacraft"
-version = "1.1.1"
+version = "1.1.2"
 description = "Python command-line tool to generates text files based on Jinja2 template and YAML data file."
 authors = ["Steve De Jongh <dejongh.st@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/sdejongh/jinjacraft"
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Text Processing :: General",
+    "Topic :: Utilities",
+]
+keywords = ["jinja2", "yaml", "template", "command-line"]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = ">=3.9"
 jinja2 = "^3.1.2"
 pyyaml = "^6.0.1"
 pytest = "^7.4.0"
@@ -17,3 +32,6 @@ jinjacraft = "jinjacraft.main:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/sdejongh/jinjacraft/issues"
