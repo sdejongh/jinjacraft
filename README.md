@@ -6,10 +6,7 @@ and a YAML data file.
 
 ## Installation
 ```
-git clone https://github.com/sdejongh/jinjacraft.git
-cd jinjacraft
-pip install -r requirements.txt
-pip install .
+pip install jinjacraft
 ```
 
 ## Usage
@@ -25,3 +22,38 @@ options:
   -o OUTPUT_FILE, --output_file OUTPUT_FILE
                         Output file path
 ```
+
+## Example
+### YAML file
+```yaml
+title: Hello World
+tasks:
+  - name: First task
+    completed: True
+  - name: Second task
+    completed: False
+
+```
+
+### Template file
+```jinja2
+Document: {{ title }}
+Tasks:
+{% for task in tasks %}- {{ task.name }} ({% if task.completed %}completed{% else %}not completed{% endif %})
+{%  endfor %}
+```
+
+### Command line
+```bash
+jinjacraft data.yaml template.jinja2 -o outputfile.txt
+```
+
+### Output file content
+```
+Document: Hello World
+Tasks:
+- First task (completed)
+- Second task (not completed)
+```
+
+
