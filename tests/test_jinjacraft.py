@@ -1,11 +1,18 @@
 """Unit tests for JinjaCraft."""
 
+import os
+import tempfile
 import warnings
 import pytest
 
 from jinjacraft.renderer import TemplateRenderer
 from jinjacraft.validator import get_template_variables, get_data_keys, validate
-from jinjacraft.exceptions import ValidationError
+from jinjacraft.model_generator import (
+    generate_model,
+    generate_model_file,
+    TemplateAnalyzer,
+)
+from jinjacraft.exceptions import ValidationError, ModelGenerationError
 
 
 class TestRenderer:
@@ -139,3 +146,174 @@ class TestValidate:
         data = {"unused": "value"}
         with pytest.raises(ValidationError):
             validate(template, data)
+
+
+class TestTemplateAnalyzer:
+    """Tests for the TemplateAnalyzer class."""
+
+    def test_simple_variable(self):
+        """Verify extraction of a simple variable."""
+        analyzer = TemplateAnalyzer("Hello {{ name }}!")
+        result = analyzer.analyze()
+        assert result == {"name": "<name>"}
+
+    def test_multiple_variables(self):
+        """Verify extraction of multiple variables."""
+        analyzer = TemplateAnalyzer("{{ greeting }}, {{ name }}!")
+        result = analyzer.analyze()
+        assert result == {"greeting": "<greeting>", "name": "<name>"}
+
+    def test_nested_variable(self):
+        """Verify extraction of nested object access."""
+        analyzer = TemplateAnalyzer("{{ user.name }}")
+        result = analyzer.analyze()
+        assert result == {"user": {"name": "<name>"}}
+
+    def test_deeply_nested_variable(self):
+        """Verify extraction of deeply nested object access."""
+        analyzer = TemplateAnalyzer("{{ user.address.city }}")
+        result = analyzer.analyze()
+        assert result == {"user": {"address": {"city": "<city>"}}}
+
+    def test_loop_with_item_attributes(self):
+        """Verify extraction of list with item attributes from a for loop."""
+        template = "{% for item in items %}{{ item.name }}{% endfor %}"
+        analyzer = TemplateAnalyzer(template)
+        result = analyzer.analyze()
+        assert result == {"items": [{"name": "<name>"}]}
+
+    def test_loop_with_multiple_attributes(self):
+        """Verify extraction of multiple attributes from loop items."""
+        template = "{% for task in tasks %}{{ task.name }} - {{ task.done }}{% endfor %}"
+        analyzer = TemplateAnalyzer(template)
+        result = analyzer.analyze()
+        assert "tasks" in result
+        assert isinstance(result["tasks"], list)
+        assert "name" in result["tasks"][0]
+        assert "done" in result["tasks"][0]
+
+    def test_conditional_variable(self):
+        """Verify extraction of variables in conditional statements."""
+        template = "{% if show %}{{ message }}{% endif %}"
+        analyzer = TemplateAnalyzer(template)
+        result = analyzer.analyze()
+        assert "show" in result
+        assert "message" in result
+
+    def test_conditional_variable_is_marked(self):
+        """Verify that variables used in conditions are marked as truthy values."""
+        template = "{% if active %}{{ message }}{% endif %}"
+        analyzer = TemplateAnalyzer(template)
+        result = analyzer.analyze()
+        assert result["active"]["__condition__"] is True
+        assert result["active"]["value"] == "<active>"
+        assert result["message"] == "<message>"
+
+    def test_loop_conditional_is_marked(self):
+        """Verify that loop item attributes in conditions are marked as truthy values."""
+        template = "{% for task in tasks %}{% if task.done %}{{ task.name }}{% endif %}{% endfor %}"
+        analyzer = TemplateAnalyzer(template)
+        result = analyzer.analyze()
+        assert result["tasks"][0]["done"]["__condition__"] is True
+        assert result["tasks"][0]["done"]["value"] == "<done>"
+        assert result["tasks"][0]["name"] == "<name>"
+
+    def test_no_variables(self):
+        """Verify empty result for template without variables."""
+        analyzer = TemplateAnalyzer("Hello world!")
+        result = analyzer.analyze()
+        assert result == {}
+
+    def test_invalid_template_raises_error(self):
+        """Verify that invalid template syntax raises ModelGenerationError."""
+        analyzer = TemplateAnalyzer("{% for item in %}")
+        with pytest.raises(ModelGenerationError):
+            analyzer.analyze()
+
+
+class TestGenerateModel:
+    """Tests for the generate_model function."""
+
+    def test_generates_yaml_with_placeholders(self):
+        """Verify that generated YAML contains placeholders."""
+        template = "Hello {{ name }}!"
+        result = generate_model(template)
+        assert "<name>" in result
+        assert "# string" in result
+
+    def test_generates_yaml_with_list(self):
+        """Verify that generated YAML contains list structure."""
+        template = "{% for item in items %}{{ item.value }}{% endfor %}"
+        result = generate_model(template)
+        assert "items:" in result
+        assert "# list" in result
+
+    def test_empty_template_returns_comment(self):
+        """Verify that template without variables returns a comment."""
+        result = generate_model("Hello world!")
+        assert "No variables found" in result
+
+
+class TestGenerateModelFile:
+    """Tests for the generate_model_file function."""
+
+    def test_generates_file_with_default_name(self):
+        """Verify that output file uses template name with .yaml extension."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+
+            output_path = generate_model_file(template_path)
+
+            assert output_path == os.path.join(tmpdir, "test.yaml")
+            assert os.path.exists(output_path)
+
+    def test_generates_file_with_custom_name(self):
+        """Verify that custom output file path is used."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            output_path = os.path.join(tmpdir, "custom.yaml")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+
+            result = generate_model_file(template_path, output_file=output_path)
+
+            assert result == output_path
+            assert os.path.exists(output_path)
+
+    def test_error_if_file_exists(self):
+        """Verify that error is raised if output file exists without force."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            output_path = os.path.join(tmpdir, "test.yaml")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+            with open(output_path, "w") as f:
+                f.write("existing content")
+
+            with pytest.raises(ModelGenerationError) as exc_info:
+                generate_model_file(template_path)
+            assert "already exists" in str(exc_info.value)
+
+    def test_force_overwrites_existing_file(self):
+        """Verify that force=True overwrites existing file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            output_path = os.path.join(tmpdir, "test.yaml")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+            with open(output_path, "w") as f:
+                f.write("existing content")
+
+            generate_model_file(template_path, force=True)
+
+            with open(output_path) as f:
+                content = f.read()
+            assert "<name>" in content
+
+    def test_error_if_template_not_found(self):
+        """Verify that error is raised if template file does not exist."""
+        with pytest.raises(ModelGenerationError) as exc_info:
+            generate_model_file("/nonexistent/template.jinja2")
+        assert "not found" in str(exc_info.value)

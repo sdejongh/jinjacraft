@@ -23,3 +23,7 @@ class OutputFileError(JinjaCraftError):
 
 class ValidationError(JinjaCraftError):
     """Error validating data against template"""
+
+
+class ModelGenerationError(JinjaCraftError):
+    """Error generating model YAML from template"""

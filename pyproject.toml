@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jinjacraft"
-version = "1.3.0"
+version = "1.4.0"
 description = "Python command-line tool to generates text files based on Jinja2 template and YAML data file."
 authors = ["Steve De Jongh <dejongh.st@gmail.com>"]
 readme = "README.md"
