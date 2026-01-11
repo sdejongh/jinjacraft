@@ -12,7 +12,7 @@ from jinjacraft.model_generator import (
     generate_model_file,
     TemplateAnalyzer,
 )
-from jinjacraft.exceptions import ValidationError, ModelGenerationError
+from jinjacraft.exceptions import ValidationError, ModelGenerationError, DataFileError
 
 
 class TestRenderer:
@@ -37,6 +37,39 @@ class TestRenderer:
             awaited_result = reference.read()
 
         assert result == awaited_result
+
+    def test_render_with_json_format(self):
+        """Verify that a template is correctly rendered using JSON format option.
+
+        Renders the same template with JSON data using --format json option.
+        """
+        data_file = "tests/data.json"
+        template_file = "tests/template.jinja2"
+        output_file = "tests/output.txt"
+        reference_output_file = "tests/reference_output.txt"
+        TemplateRenderer.render(data_file, template_file, output_file, data_format="json")
+
+        with open(output_file) as output:
+            result = output.read()
+
+        with open(reference_output_file) as reference:
+            awaited_result = reference.read()
+
+        assert result == awaited_result
+
+    def test_invalid_json_raises_error(self):
+        """Verify that DataFileError is raised for invalid JSON."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_path = os.path.join(tmpdir, "data.txt")
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            with open(json_path, "w") as f:
+                f.write("{invalid json}")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+
+            with pytest.raises(DataFileError) as exc_info:
+                TemplateRenderer.render(json_path, template_path, data_format="json")
+            assert "Invalid JSON" in str(exc_info.value)
 
 
 class TestGetTemplateVariables:
@@ -253,6 +286,25 @@ class TestGenerateModel:
         result = generate_model("Hello world!")
         assert "No variables found" in result
 
+    def test_generates_json_with_placeholders(self):
+        """Verify that generated JSON contains placeholders."""
+        template = "Hello {{ name }}!"
+        result = generate_model(template, output_format="json")
+        assert "<name>" in result
+        assert '"name":' in result
+
+    def test_generates_json_with_list(self):
+        """Verify that generated JSON contains list structure."""
+        template = "{% for item in items %}{{ item.value }}{% endfor %}"
+        result = generate_model(template, output_format="json")
+        assert '"items":' in result
+        assert "[" in result
+
+    def test_empty_template_returns_empty_json(self):
+        """Verify that template without variables returns empty JSON object."""
+        result = generate_model("Hello world!", output_format="json")
+        assert result.strip() == "{}"
+
 
 class TestGenerateModelFile:
     """Tests for the generate_model_file function."""
@@ -317,3 +369,36 @@ class TestGenerateModelFile:
         with pytest.raises(ModelGenerationError) as exc_info:
             generate_model_file("/nonexistent/template.jinja2")
         assert "not found" in str(exc_info.value)
+
+    def test_generates_json_file_with_default_name(self):
+        """Verify that output file uses .json extension when format is json."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+
+            output_path = generate_model_file(template_path, output_format="json")
+
+            assert output_path == os.path.join(tmpdir, "test.json")
+            assert os.path.exists(output_path)
+
+            with open(output_path) as f:
+                content = f.read()
+            assert '"name":' in content
+
+    def test_generates_json_file_with_custom_name(self):
+        """Verify that custom output file path is used for JSON."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            template_path = os.path.join(tmpdir, "test.jinja2")
+            output_path = os.path.join(tmpdir, "custom.json")
+            with open(template_path, "w") as f:
+                f.write("{{ name }}")
+
+            result = generate_model_file(
+                template_path,
+                output_file=output_path,
+                output_format="json"
+            )
+
+            assert result == output_path
+            assert os.path.exists(output_path)

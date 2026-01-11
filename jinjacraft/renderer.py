@@ -1,4 +1,5 @@
 from typing import Any, Optional
+import json
 import yaml
 import jinja2
 
@@ -12,27 +13,33 @@ from jinjacraft.validator import validate
 
 
 class TemplateRenderer:
-    """Jinja2 template renderer using Yaml data file"""
+    """Jinja2 template renderer using YAML or JSON data file"""
 
     @classmethod
-    def __load_data(cls, data_file: str) -> Any:
-        """Loads data from YAML file
+    def __load_data(cls, data_file: str, data_format: str = "yaml") -> Any:
+        """Loads data from YAML or JSON file
 
         Args:
-            data_file (str):    Yaml data file path
+            data_file (str): Data file path
+            data_format (str): Data format ("yaml" or "json"), defaults to "yaml"
 
-        Returns: Parsed yaml data
+        Returns: Parsed data
 
         Raises:
-            DataFileError: If file not found, permission denied, or YAML parsing fails
+            DataFileError: If file not found, permission denied, or parsing fails
         """
         try:
             with open(data_file) as file:
-                return yaml.load(file, Loader=yaml.Loader)
+                if data_format == "json":
+                    return json.load(file)
+                else:
+                    return yaml.load(file, Loader=yaml.Loader)
         except FileNotFoundError:
             raise DataFileError(f"Data file not found: {data_file}")
         except PermissionError:
             raise DataFileError(f"Permission denied: {data_file}")
+        except json.JSONDecodeError as err:
+            raise DataFileError(f"Invalid JSON in {data_file}: {err}")
         except yaml.YAMLError as err:
             raise DataFileError(f"Invalid YAML in {data_file}: {err}")
 
@@ -85,14 +92,21 @@ class TemplateRenderer:
         print(content)
 
     @classmethod
-    def render(cls, data_file: str, template_file: str, output_file: Optional[str] = None):
-        """Render the Jinja2 template using the YAML data file
+    def render(
+        cls,
+        data_file: str,
+        template_file: str,
+        output_file: Optional[str] = None,
+        data_format: str = "yaml"
+    ):
+        """Render the Jinja2 template using a YAML or JSON data file
         If output_file is None, prints the result to the terminal, otherwise write to the output file.
 
         Args:
-            data_file (str):            Yaml data file path
+            data_file (str):            Data file path
             template_file (str):        Jinja2 template file path
             output_file (Optional[str]): Output file path
+            data_format (str):          Data format ("yaml" or "json"), defaults to "yaml"
 
         Raises:
             DataFileError: If data file cannot be loaded
@@ -101,7 +115,7 @@ class TemplateRenderer:
             TemplateRenderError: If template rendering fails
             OutputFileError: If output file cannot be written
         """
-        data = cls.__load_data(data_file)
+        data = cls.__load_data(data_file, data_format)
         template = cls.__load_template(template_file)
 
         # Validate data against template before rendering

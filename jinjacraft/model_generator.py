@@ -1,5 +1,6 @@
-"""Model YAML generator from Jinja2 templates."""
+"""Model generator from Jinja2 templates (YAML or JSON output)."""
 
+import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Set
@@ -353,14 +354,43 @@ def _add_type_comments(data: Any, indent: int = 0) -> str:
     return "\n".join(lines)
 
 
-def generate_model(template_source: str) -> str:
-    """Generate a model YAML from a Jinja2 template.
+def _clean_structure_for_json(data: Any) -> Any:
+    """Clean the structure for JSON output by removing condition markers.
+
+    Args:
+        data: Data structure to clean
+
+    Returns:
+        Cleaned data structure suitable for JSON
+    """
+    if isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, dict) and value.get("__condition__"):
+                # Replace condition marker with just the value
+                result[key] = value.get("value", f"<{key}>")
+            elif isinstance(value, dict):
+                result[key] = _clean_structure_for_json(value)
+            elif isinstance(value, list):
+                result[key] = _clean_structure_for_json(value)
+            else:
+                result[key] = value
+        return result
+    elif isinstance(data, list):
+        return [_clean_structure_for_json(item) for item in data]
+    else:
+        return data
+
+
+def generate_model(template_source: str, output_format: str = "yaml") -> str:
+    """Generate a model data file from a Jinja2 template.
 
     Args:
         template_source: The Jinja2 template source code
+        output_format: Output format ("yaml" or "json"), defaults to "yaml"
 
     Returns:
-        YAML string with placeholders and type comments
+        YAML or JSON string with placeholders
 
     Raises:
         ModelGenerationError: If the template is invalid
@@ -369,7 +399,13 @@ def generate_model(template_source: str) -> str:
     structure = analyzer.analyze()
 
     if not structure:
+        if output_format == "json":
+            return "{}\n"
         return "# No variables found in template\n"
+
+    if output_format == "json":
+        clean_structure = _clean_structure_for_json(structure)
+        return json.dumps(clean_structure, indent=2) + "\n"
 
     return _add_type_comments(structure) + "\n"
 
@@ -377,14 +413,16 @@ def generate_model(template_source: str) -> str:
 def generate_model_file(
     template_file: str,
     output_file: str = None,
-    force: bool = False
+    force: bool = False,
+    output_format: str = "yaml"
 ) -> str:
-    """Generate a model YAML file from a Jinja2 template file.
+    """Generate a model data file from a Jinja2 template file.
 
     Args:
         template_file: Path to the Jinja2 template file
-        output_file: Path for the output YAML file (default: template_name.yaml)
+        output_file: Path for the output file (default: template_name.yaml or .json)
         force: Overwrite existing file if True
+        output_format: Output format ("yaml" or "json"), defaults to "yaml"
 
     Returns:
         Path to the generated file
@@ -395,7 +433,8 @@ def generate_model_file(
     # Determine output file path
     if output_file is None:
         template_path = Path(template_file)
-        output_file = str(template_path.with_suffix(".yaml"))
+        extension = ".json" if output_format == "json" else ".yaml"
+        output_file = str(template_path.with_suffix(extension))
 
     # Check if output file exists
     if os.path.exists(output_file) and not force:
@@ -413,12 +452,12 @@ def generate_model_file(
         raise ModelGenerationError(f"Permission denied: {template_file}")
 
     # Generate model
-    model_yaml = generate_model(template_source)
+    model_content = generate_model(template_source, output_format)
 
     # Write output
     try:
         with open(output_file, "w") as f:
-            f.write(model_yaml)
+            f.write(model_content)
     except PermissionError:
         raise ModelGenerationError(f"Permission denied: {output_file}")
 

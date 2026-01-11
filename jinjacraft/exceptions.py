@@ -6,7 +6,7 @@ class JinjaCraftError(Exception):
 
 
 class DataFileError(JinjaCraftError):
-    """Error loading or parsing YAML data file"""
+    """Error loading or parsing data file (YAML or JSON)"""
 
 
 class TemplateFileError(JinjaCraftError):
