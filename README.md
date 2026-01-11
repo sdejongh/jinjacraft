@@ -1,8 +1,8 @@
 ![Python](https://img.shields.io/pypi/pyversions/jinjacraft?v=1.5.0)
 # JINJACRAFT
 
-JinjaCraft is a simple Python command-line tool which can generate text file based on a Jinja2 template
-and a YAML data file and  event generate a base data file in Yaml format from a Jinja2 template.
+JinjaCraft is a simple Python command-line tool which can generate text files based on a Jinja2 template
+and a YAML or JSON data file. It can also generate a model data file from a Jinja2 template.
 
 ## Requirements
 
@@ -22,35 +22,37 @@ pipx install jinjacraft
 
 ## Usage
 ```
-usage: jinjacraft [-h] [-g TEMPLATE] [-f] [-o OUTPUT_FILE] [data_file] [template_file]
+usage: jinjacraft [-h] [-g TEMPLATE] [-f] [-o OUTPUT_FILE] [--format {yaml,json}]
+                  [data_file] [template_file]
 
-Generate text files from Jinja2 templates and YAML data
+Generate text files from Jinja2 templates and YAML/JSON data
 
 positional arguments:
-  data_file             YAML data file path
+  data_file             Data file path (YAML or JSON)
   template_file         Jinja2 template file path
 
 options:
   -h, --help            show this help message and exit
   -g TEMPLATE, --generate-model TEMPLATE
-                        Generate a model YAML file from a Jinja2 template
+                        Generate a model data file from a Jinja2 template
   -f, --force           Overwrite existing output file
   -o OUTPUT_FILE, --output_file OUTPUT_FILE
                         Output file path
+  --format {yaml,json}  Data file format (default: yaml)
 ```
 
 ## Features
 
 ### Data Validation
 
-JinjaCraft validates your YAML data against the template before rendering:
+JinjaCraft validates your data (YAML or JSON) against the template before rendering:
 
-- **Missing variables**: If a variable is used in the template but not defined in the YAML file, an error is returned and rendering is aborted.
-- **Unused variables**: If a variable is defined in the YAML file but not used in the template, a warning is displayed but rendering continues.
+- **Missing variables**: If a variable is used in the template but not defined in the data file, an error is returned and rendering is aborted.
+- **Unused variables**: If a variable is defined in the data file but not used in the template, a warning is displayed but rendering continues.
 
 ### Model Generation
 
-Generate a model YAML file from a Jinja2 template to see which variables are expected:
+Generate a model data file from a Jinja2 template to see which variables are expected:
 
 ```bash
 jinjacraft -g template.jinja2
@@ -65,15 +67,37 @@ tasks:  # list
     completed: "<completed>"  # truthy value (boolean, string, number)
 ```
 
+Use `--format json` to generate a JSON model instead:
+
+```bash
+jinjacraft -g template.jinja2 --format json
+```
+
+This creates `template.json`:
+
+```json
+{
+  "title": "<title>",
+  "tasks": [
+    {
+      "name": "<name>",
+      "completed": "<completed>"
+    }
+  ]
+}
+```
+
 Use `-o` to specify a custom output file, and `-f` to overwrite an existing file:
 
 ```bash
 jinjacraft -g template.jinja2 -o model.yaml -f
 ```
 
-## Example
+## Examples
 
-### YAML file
+### Using YAML data
+
+#### YAML file
 ```yaml
 title: Hello World
 tasks:
@@ -81,26 +105,45 @@ tasks:
     completed: True
   - name: Second task
     completed: False
-
 ```
 
-### Template file
+#### Template file
 ```jinja2
 Document: {{ title }}
 Tasks:
 {% for task in tasks %}- {{ task.name }} ({% if task.completed %}completed{% else %}not completed{% endif %})
-{%  endfor %}
+{% endfor %}
 ```
 
-### Command line
+#### Command line
 ```bash
 jinjacraft data.yaml template.jinja2 -o outputfile.txt
 ```
 
-### Output file content
+#### Output
 ```
 Document: Hello World
 Tasks:
 - First task (completed)
 - Second task (not completed)
 ```
+
+### Using JSON data
+
+#### JSON file
+```json
+{
+  "title": "Hello World",
+  "tasks": [
+    {"name": "First task", "completed": true},
+    {"name": "Second task", "completed": false}
+  ]
+}
+```
+
+#### Command line
+```bash
+jinjacraft data.json template.jinja2 --format json -o outputfile.txt
+```
+
+The output is the same as with YAML data.
