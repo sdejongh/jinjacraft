@@ -1,4 +1,4 @@
-![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-blue)
+![Python](https://img.shields.io/pypi/pyversions/jinjacraft)
 # JINJACRAFT
 
 JinjaCraft is a simple Python command-line tool which can generate text file based on a Jinja2 template

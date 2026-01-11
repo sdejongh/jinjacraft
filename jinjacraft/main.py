@@ -1,5 +1,7 @@
 import argparse
+import sys
 from jinjacraft.renderer import TemplateRenderer
+from jinjacraft.exceptions import JinjaCraftError
 
 
 def main():
@@ -14,7 +16,15 @@ def main():
     args = parser.parse_args()
 
     # Render the template using YAML data
-    TemplateRenderer.render(data_file=args.data_file, template_file=args.template_file, output_file=args.output_file)
+    try:
+        TemplateRenderer.render(
+            data_file=args.data_file,
+            template_file=args.template_file,
+            output_file=args.output_file
+        )
+    except JinjaCraftError as err:
+        print(f"Error: {err}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
