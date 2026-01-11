@@ -8,6 +8,7 @@ from jinjacraft.exceptions import (
     TemplateRenderError,
     OutputFileError,
 )
+from jinjacraft.validator import validate
 
 
 class TemplateRenderer:
@@ -96,11 +97,16 @@ class TemplateRenderer:
         Raises:
             DataFileError: If data file cannot be loaded
             TemplateFileError: If template file cannot be loaded
+            ValidationError: If required variables are missing from data
             TemplateRenderError: If template rendering fails
             OutputFileError: If output file cannot be written
         """
         data = cls.__load_data(data_file)
         template = cls.__load_template(template_file)
+
+        # Validate data against template before rendering
+        validate(template, data)
+
         environment = jinja2.Environment()
         try:
             jinja2_template = environment.from_string(template)

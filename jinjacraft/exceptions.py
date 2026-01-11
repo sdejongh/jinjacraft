@@ -19,3 +19,7 @@ class TemplateRenderError(JinjaCraftError):
 
 class OutputFileError(JinjaCraftError):
     """Error writing output file"""
+
+
+class ValidationError(JinjaCraftError):
+    """Error validating data against template"""
