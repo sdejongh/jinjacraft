@@ -444,7 +444,7 @@ def generate_model_file(
 
     # Read template
     try:
-        with open(template_file) as f:
+        with open(template_file, encoding="utf-8") as f:
             template_source = f.read()
     except FileNotFoundError:
         raise ModelGenerationError(f"Template file not found: {template_file}")
@@ -456,7 +456,7 @@ def generate_model_file(
 
     # Write output
     try:
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(model_content)
     except PermissionError:
         raise ModelGenerationError(f"Permission denied: {output_file}")

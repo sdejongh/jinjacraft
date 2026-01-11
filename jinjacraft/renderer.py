@@ -29,7 +29,7 @@ class TemplateRenderer:
             DataFileError: If file not found, permission denied, or parsing fails
         """
         try:
-            with open(data_file) as file:
+            with open(data_file, encoding="utf-8") as file:
                 if data_format == "json":
                     return json.load(file)
                 else:
@@ -56,7 +56,7 @@ class TemplateRenderer:
             TemplateFileError: If file not found or permission denied
         """
         try:
-            with open(template_file) as file:
+            with open(template_file, encoding="utf-8") as file:
                 return file.read()
         except FileNotFoundError:
             raise TemplateFileError(f"Template file not found: {template_file}")
@@ -75,7 +75,7 @@ class TemplateRenderer:
             OutputFileError: If permission denied or directory not found
         """
         try:
-            with open(output_file, "w") as file:
+            with open(output_file, "w", encoding="utf-8") as file:
                 file.write(content)
         except PermissionError:
             raise OutputFileError(f"Permission denied: {output_file}")

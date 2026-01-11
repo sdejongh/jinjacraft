@@ -6,18 +6,19 @@ and a YAML or JSON data file. It can also generate a model data file from a Jinj
 
 ## Requirements
 
-Python 3.9 or higher
+- Python 3.9 or higher
+- Supported platforms: Linux, Windows, macOS
 
 ## Installation
+
+Using pipx (recommended):
+```bash
+pipx install jinjacraft
+```
 
 Using pip:
 ```bash
 pip install jinjacraft
-```
-
-Using pipx (recommended for CLI tools):
-```bash
-pipx install jinjacraft
 ```
 
 ## Usage
