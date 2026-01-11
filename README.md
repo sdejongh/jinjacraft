@@ -4,6 +4,10 @@
 JinjaCraft is a simple Python command-line tool which can generate text file based on a Jinja2 template
 and a YAML data file.
 
+## Requirements
+
+Python 3.9 or higher
+
 ## Installation
 ```
 pip install jinjacraft
